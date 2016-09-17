@@ -336,4 +336,4 @@ Nginx的官方维基：[https://www.nginx.com/resources/wiki/](https://www.nginx
 在浏览器上输入地址即可显示PHP的信息
 
 
-			
+			 
