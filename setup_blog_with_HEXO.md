@@ -83,16 +83,19 @@ Hexo安装完成后，执行下列命令，Hexo就会在指定文件夹生成需
 
 		$ hexo generate
 		$ hexo server
+		
+		
 就可以在本地预览自己编写的博客，地址是localhost:4000
 
 
 #### 7、配置 ####
 
-到上述生成的目录下，找到_config.yml文件，用非windows的记事本打开，如notpad++，找到最后一部分，如下填写（每个冒号后面都有个空格，不然会报错）：
+到上述生成的目录下，找到_config.yml文件，用非windows的记事本打开，如notpad++，找到最后一部分，如下填写（每个冒号后面都有个空格按照yaml语言要求，不然会报错）：
 
-		deploy: git
-		repo: https://github.com/youraccountname/youraccountname.git.io
-		branch: master
+		deploy: 
+		  type: git
+		  repo: https://github.com/youraccountname/youraccountname.git.io
+		  branch: master
 
 然后保存。就可以开始文档的编辑了，这个步骤的目的是将生成的静态页面的相关文档上交到你的github账户下的仓库里。
 
@@ -101,6 +104,7 @@ Hexo安装完成后，执行下列命令，Hexo就会在指定文件夹生成需
 完成以上步骤之后，基本就完成博客的编写，但是仅仅是将文件生成好，别人还是没办法看到你所写的内容。这时候就要页面相关的文件部署到github仓库中。需要执行下面的语句：
 
 		$ hexo deploy
+		
 至此就完成了Hexo博客的搭建了。
 
 #### 9、迁移 ####
@@ -116,5 +120,19 @@ Hexo安装完成后，执行下列命令，Hexo就会在指定文件夹生成需
 		$ hexo deploy
 > 后记：第一篇博客花的时间有点儿长，都是因为自己不熟悉markdown。以后还得多写写，把这个养成一种习惯。能看到这儿的人，道个谢，共勉哈！
 
+#### 10、踩过的坑 ####
+
+在mac下执行`hexo`相关命令报错，内容如下:
 
 
+		{ [Error: Cannot find module './build/Release/DTraceProviderBindings'] code: 'MODULE_NOT_FOUND' }
+		{ [Error: Cannot find module './build/default/DTraceProviderBindings'] code: 'MODULE_NOT_FOUND' }
+		{ [Error: Cannot find module './build/Debug/DTraceProviderBindings'] code: 'MODULE_NOT_FOUND' }
+		
+原因应该是少安装了模块，网上的解决办法说的是执行`$ npm install hexo --no-optional
+`我尝试过这个办法，但是问题依旧(即便是将hexo删除了再执行这个命令安装)。于是在一篇文章中找到了如下解决办法，执行之后就没有报错了:
+
+		$> npm uninstall hexo-cli -g
+		$> npm install hexo-cli -g
+		
+执行完上述两步骤之后，就不再报错啦～
