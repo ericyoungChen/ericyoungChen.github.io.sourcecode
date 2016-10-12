@@ -29,7 +29,7 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 		-rw-r--r-- 1 root root 0 Sep 18 16:11 max_user_instances
 		-rw-r--r-- 1 root root 0 Sep 18 16:11 max_user_watches
 
-### 二、功能实现 ###
+### 二、功能探索 ###
 
 #### 1. rsync 配置
 
@@ -51,7 +51,7 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 		ignore errors
 		read only	= yes
 		list		= true
-		hosts allow	= 192.168.149.172,192.168.143.117,192.168.143.118,192.168.143.119
+		hosts allow	= many-ips
 		hosts deny	= 0.0.0.0/32
 		auth users	= rsync
 		secrets file    = /etc/rsyncd.passworda
@@ -68,12 +68,12 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 2. 认证配置:
 
 
-	* 在服务端(171)上保存认证文件，权限如下:
+	* 在服务端上保存认证文件，权限如下:
 
 			$> ll /etc/rsyncd.passworda
 			-rw------- 1 root root 39 Sep 18 17:12 /etc/rsyncd.passworda
 
-	* 以及客户端(149.172,143.117-119)(149.33)的机器上分别保存内容，权限一样的文件:
+	* 以及客户端的机器上分别保存内容，权限一样的文件:
 
 			$> ll /etc/rsyncd.passworda
 			-rw------- 1 root root 39 Sep 18 17:12 /etc/rsyncd.passworda
@@ -81,7 +81,7 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 3. 在客户机上分别执行如下命令，即完成文件同步功能:
 
 
-		$> rsync -azv rsync@192.168.143.171::php_env --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/
+		$> rsync -azv rsync@ipa::php_env --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/
 
 至此，已完成文件同步的功能。但如果仅仅依靠计划任务来对该目录下的文件进行同步，有些不便捷。所以引入以下工具配合rsync来对配置文件进行同步管理。
 
@@ -158,16 +158,16 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 		$> ansible all -m shell -a "ps aux |grep rsync | grep -v grep " -k -i /home/.houzi/hosts/php.hosts		
 
 
-(3). 在171上测试同步是否成功:
+(3). 在服务端上测试同步是否成功:
 
 
-		$> /usr/bin/rsync -avzP --progress --delete --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/ root@192.168.143.117::php_env
+		$> /usr/bin/rsync -avzP --progress --delete --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/ root@ipa::php_env
 		@ERROR: auth failed on module php_env
 		rsync error: error starting client-server protocol (code 5) at main.c(1503) [sender=3.0.6]
-		$> /usr/bin/rsync -avzP --progress --delete --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/ root@192.168.143.118::php_env
+		$> /usr/bin/rsync -avzP --progress --delete --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/ root@ipb::php_env
 		@ERROR: auth failed on module php_env
 		rsync error: error starting client-server protocol (code 5) at main.c(1503) [sender=3.0.6]
-		$> /usr/bin/rsync -avzP --progress --delete --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/ root@192.168.143.119::php_env
+		$> /usr/bin/rsync -avzP --progress --delete --password-file=/etc/rsyncd.passworda /usr/local/webserver/php/etc/fpm.d/ root@ipc::php_env
 		@ERROR: auth failed on module php_env
 		rsync error: error starting client-server protocol (code 5) at main.c(1503) [sender=3.0.6]
 	
@@ -175,7 +175,7 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 至此，貌似没有一个成功的，遇到这个问题，先检查目标机器上的`/etc/rsync.passwda`文件的权限
 
 
-		$> ansible all -m shell -a "ls -lthr /etc/rsyn*" -k -i /home/.houzi/hosts/php.hosts 
+		$> ansible all -m shell -a "ls -lthr /etc/rsyn*" -k -i hosts 
 		SSH password: 
 		192.168.143.171 | SUCCESS | rc=0 >>
 		-rw------- 1 root root   15 Aug 17  2015 /etc/rsyncd.password
@@ -338,8 +338,38 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 
 		$> tail -f /tmp/reload.log 
 		26/09/16 13:58  /usr/local/webserver/php/etc/fpm.d/.juanpi_php_env.conf.1hga3I has been MODIFY, php-fpm is reloading
-则表明自动reload脚本部署完成。
+则表明自动reload脚本部署完成且已经生效了。
 
 
+8).结果
 
-(因为inotify的监测，做不到对单个文件的mtime进行监测，测试过很多次，对单个文件修改，无法触发自动rsync，如果对目录进行)
+
+因为inotify的监测，做不到对单个文件的mtime进行监测，测试过很多次，对单个文件修改，无法触发自动rsync(原因在后文解释)，如果对目录进行检测，由于`fpm.d`目录下会生成临时文件则会造成`php`的`reload`操作过于频繁(因为计划任务的进行，会导致很多临时文件的产生)。
+
+
+### 三、最终方案
+
+
+最终使用的同步方法是确认原配置文件正确之后，使用一个批量`rsync`同步脚本，将修改分发到各个客户端。或者使用`ansible`来进行文件同步。配合计划任务(区分功能与回归测试环境的环境变量值)
+
+
+### 四、总结
+
+由于`inotify－tools`监控机制是基于文件的`inode`指向。而通过`rsync`方法同步文件调用的是系统的`sendfile`对文件进行修改，这种情况造成的后果是原来被`inotify`检测的文件`inode`已经失效了，虽然文件名称依然一样，但此时这个同名文件的`inode`指向已经是一个全新的节点。故就无法检测到对应的事件。
+
+
+虽然最终没有达到理想的效果，但是对linux的文件系统又有了新的认识。即每个`inode`包含着文件的元信息：
+
+* 文件的字节数
+* 文件的所属(`GID`和`UID`)
+* 文件的权限(`r`,`w`,`x`)
+* 文件的时间戳(`ctime`,`mtime`,`atime`)
+* 链接数
+* 文件数据的`block`位置
+
+对文件进行修改操作的时候，文件的`inode`并未改变，此时，`inotifywait`还是可以监视文件内容变化的，也就是说直接对文件进行修改能触发同步脚本。
+
+但是通过`rsync`同步文件之后，该文件名虽然还和原来一致，但是此时文件的`inode`值已经改变，故`inotifywait`无法监视文件内容变化，因为它所监视的文件已经不存在了。
+
+虽然做了一次无用功，但是，让自己对`Linux`文件系统有了新的认知(也反映了自己基础的不牢固)
+
