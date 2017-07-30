@@ -1,3 +1,10 @@
+title : ELasticSearch 初探
+date: 2017-07-30 18:00
+tags: [ElasticSearch, ES]
+---
+
+
+
 # ELasticSearch 初探 #
 
 ## 一、 背景 ##
@@ -11,7 +18,14 @@
 2. 面向文档，所有对象的内容均可索引
 3. 交互格式为`JSON`, 非常友好的`RESTFUL`接口
 4. 官网提供主流语言API，即使非主流的语言，社区也有维护和开发各自的`API`
-5. 一些数据层概念：
+5. 一些架构层的概念
+
+	* 节点(Node): 每个`ES`实例为一个节点，节点有三种角色
+	* 集群(Cluster): 配置有同一集群名称的节点集合。集群为数据提供高可用的保证
+	* 分片(shard): 分片为存储单机容量的数据提供了可能，数据可以被`ES`分发到多个存储节点(即有分片索引的data node)，默认为5个分片，可以在初始化数据的时候进行设置，无法动态更改
+	* 副本(replica): 为保证数据的完整性，可以为主分片数据设置副本，主分片出问题的时候可以将副本分片提升为主分片提供服务。
+
+6. 一些数据层概念：
 
 	* 索引(indexing): 在这里，索引为一个**动词**，代表一种将数据存储到`ES`中的这个动作，即相当于`MySQL`中的 `INSERT`
 	* 属性(fields): 多个属性，构成一个文档对象，相当于`MySQL`里的 `COLUMN`
@@ -19,67 +33,59 @@
 	* 类型(type): 多个 *文档* 对象构成一个类型， 相当于`MySQL`里的`TABLE`
 	* 索引(indices[n]): 这个在中文官网里面也翻译成索引。。。我更倾向于翻译成集合，是有多个类型构成的一个对象，相当于`MySQL`里的`DATABASE`
 
-			
-			Relational DB -> Databases -> Tables -> Rows -> Columns
-			Elasticsearch -> Indices   -> Types  -> Documents -> Fields
+| Relational DB | Databases | Tables | Rows      | Columns |
+| :-----------: | :-------: | :----: | :-------: | :-----: |
+| Elasticsearch | Indices   | Types  | Documents | Fields  |
 
 
-6. 一些架构层的概念
-
-	* 节点(Node): 每个`ES`实例为一个节点，节点有三种角色
-	* 集群(Cluster): 配置有同一集群名称的节点集合。集群为数据提供高可用的保证
-	* 分片(shard): 分片为存储单机容量的数据提供了可能，数据可以被`ES`分发到多个存储节点(即有分片索引的data node)，默认为5个分片，可以在初始化数据的时候进行设置，无法动态更改
-	* 副本(replica): 为保证数据的完整性，可以为主分片数据设置副本，主分片出问题的时候可以将副本分片提升为主分片提供服务。
-
-
+<!--more-->
 
 
 ## 二、 安装 ##
 
-1. 环境要求
+#### 1. 环境要求
 
 	* 非root用户
 	* jdk1.8+
 
-2. 下载包，解压
-3. 修改配置文件：
+#### 2. 下载包，解压
+#### 3. 修改配置文件：
 
 
 		$> grep -v ^# elasticsearch/config/elasticsearch.yml 
 		
-		 cluster.name: juanpi-goods-cluster 	#指定集群名称
-		 node.name: node 						#节点名称
-		 path.data: /data/elasticsearch/data	# 数据存放路径
-		 path.logs: /data/elasticsearch/logs	#日志路径
-		 network.host: 0.0.0.0					#服务ip
-		 http.port: 9200						#服务端口，接受http请求
-		 transport.tcp.port: 9202				# 集群通讯接口
-		 discovery.zen.ping.unicast.hosts: ["192.168.151.9"]	#设置节点初始列表，根据列表里的节点寻找集群信息
-		 bootstrap.system_call_filter: false	#沙盒测试参数，centos6不支持，es5.2以后默认开启，在centos6中要将其关闭
-		 node.master: true						#设置为Master节点
-		 node.data: true						#设置为数据节点
-		 node.ingest: true						#索引之前预处理文档对象
-		 http.cors.enabled: true				#允许跨域请求
-		 http.cors.allow-origin: "*"			#http请求规则   
-		 discovery.zen.minimum_master_nodes: (主节点数/2)+1 #设置这个的规则能避免脑裂现象,如果不做合理设置，意外退出集群的节点很可能会形成一个新的集群
+			 cluster.name: juanpi-goods-cluster 	#指定集群名称
+			 node.name: node 						#节点名称
+			 path.data: /data/elasticsearch/data	# 数据存放路径
+			 path.logs: /data/elasticsearch/logs	#日志路径
+			 network.host: 0.0.0.0					#服务ip
+			 http.port: 9200						#服务端口，接受http请求
+			 transport.tcp.port: 9202				# 集群通讯接口
+			 discovery.zen.ping.unicast.hosts: ["192.168.151.9"]	#设置节点初始列表，根据列表里的节点寻找集群信息
+			 bootstrap.system_call_filter: false	#沙盒测试参数，centos6不支持，es5.2以后默认开启，在centos6中要将其关闭
+			 node.master: true						#设置为Master节点
+			 node.data: true						#设置为数据节点
+			 node.ingest: true						#索引之前预处理文档对象
+			 http.cors.enabled: true				#允许跨域请求
+			 http.cors.allow-origin: "*"			#http请求规则   
+			 discovery.zen.minimum_master_nodes: (主节点数/2)+1 #设置这个的规则能避免脑裂现象,如果不做合理设置，意外退出集群的节点很可能会形成一个新的集群
+
+#### 4. 配置区分节点角色
 
 
-4. 配置区分节点角色
-
-
-	* Master Node(主节点，集群控制节点, 决定节点分配，):
+* Master Node(主节点，集群控制节点, 决定节点分配，):
 
 
 			node.master:true
 			node.data:false
 	
-	* Data Node(数据节点，保存数据和执行数据相关操作):
+* Data Node(数据节点，保存数据和执行数据相关操作):
 
 
 			node.master:fales
 			node.data: true
 
-	* Client Node(客户端节点, 响应用户请求，转发至其他可操作的节点):
+* Client Node(客户端节点, 响应用户请求，转发至其他可操作的节点):
 
 
 			node.master: false
@@ -147,8 +153,8 @@
 
 ### 3.3 文档管理 ###
 
-
 1. 创建一个新的index，新的type，同时插入一个`document`对象：`PUT /index/type/id`
+
 
 			PUT http://ip:port/test/book/1
 			{
@@ -243,49 +249,16 @@
 
 * 格式化输出接口以及作用如下
 
-
-	<table>
-		<tbody>
-			<tr>
-				<th>URL(?v)</th>
-				<th>作用</th>
-			</tr>
-			<tr>
-				<td>/_cat/health</td>
-				<td>集群健康状态</td>
-			</tr>
-			<tr>
-				<td>/_cat/master</td>
-				<td>当前的master节点</td>
-			</tr>
-			<tr>
-				<td>/_cat/nodes</td>
-				<td>所有的nodes信息</td>
-			</tr>
-			<tr>
-				<td>/_cat/count</td>
-				<td>所有doc数量</td>
-			</tr>
-			<tr>
-				<td>/_cat/aliases</td>
-				<td>索引别名</td>
-			</tr>
-			<tr>
-				<td>/_cat/indices</td>
-				<td>索引状态以及统计数据</td>
-			</tr>
-			<tr>
-				<td>/_cat/shards</td>
-				<td>shard分片统计信息</td>
-			</tr>
-			<tr>
-				<td>/_cat/allocation</td>
-				<td>shards分配信息</td>
-			</tr>
-		</tbody>
-	</table>
-
-
+URL(?v)|作用
+---- | ----
+/_cat/health|集群健康状态
+/_cat/master|当前的master节点
+/_cat/nodes|所有的nodes信息
+/_cat/count|所有doc数量
+/_cat/aliases|索引别名
+/_cat/indices|索引状态以及统计数据
+/_cat/shardsshard|分片统计信息
+/_cat/allocationshards|分配信息
 
 ## 五、 使用场景与意义 ##
 

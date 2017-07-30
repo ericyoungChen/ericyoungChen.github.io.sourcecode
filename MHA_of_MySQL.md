@@ -1,6 +1,7 @@
 title: MySQL高可用架构MHA
 date: 2015-12-27 00:04:43
 tags: [MySQL,MHA]
+
 ---
 
 ### 一、关于MHA ###
@@ -38,28 +39,14 @@ MHA(Master High Avaliablity)是目前在MySQL高可用方面一个相对成熟�
 
 1. 系统以及软件：Centos6.5 x64 最小化安装+MySQL-5.5.45
 2. 环境：
-<table>
-<tr>
-<td>IP地址</td>
-<td>角色</td>
-</tr>
-<tr>
-<td>192.168.1.124</td>
-<td>MHA Manager</td>
-</tr>
-<tr>
-<td>192.168.1.126</td>
-<td>MySQL Master</td>
-</tr>
-<tr>
-<td>192.168.1.127</td>
-<td>MySQL Slave1(备用Master)</td>
-</tr>
-<tr>
-<td>192.168.1.128</td>
-<td>MySQL Slave2</td>
-</tr>
-</table>
+
+
+	IP地址|角色
+	--- | ---
+	192.168.1.124|MHA Manager
+	192.168.1.126|MySQL Master
+	192.168.1.127|MySQL Slave1(备用Master)
+	192.168.1.128|MySQL Slave2
 
 
 ### 三、MySQL集群搭建 ###

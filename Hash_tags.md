@@ -1,3 +1,8 @@
+title: 对Twemproxy中一致性hash与hash tags的理解
+date: 2016-09-27 20:35:00
+tags: [Twemproxy,Redis,hash tags]
+---
+
 ## 对Twemproxy中一致性hash与hash tags的理解
 
 ##### 1. 一致性hash ####

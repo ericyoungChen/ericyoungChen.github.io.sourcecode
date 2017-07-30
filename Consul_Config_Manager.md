@@ -1,7 +1,7 @@
-    title: Consul, Consul-Template 进行配置管理
-    date: 2016-11-1 20:35:00
-    tags: [Consul,Consul-Template,Config-manager]
-    ---
+title: Consul, Consul-Template 进行配置管理
+date: 2016-11-1 20:35:00
+tags: [Consul,Consul-Template,Config-manager]
+---
     
 ## 运用Consul,Consul-Template进行配置管理 ##
 
@@ -17,7 +17,7 @@ Edited by houzi
 
 现有测试环境多套，在一处测试环境对环境变量文件进行修改，完成后进行多处下发，通过`rsync`或者`ansible`或者`saltstack`等同步工具下发。而差异的环境通过脚本进行对配置修改，从而达到配置正确适应该环境的目的。
 
-
+<!--more-->
 ### 三、解决办法 ###
 
 #### 1. 最初做法:

@@ -1,3 +1,8 @@
+title: 利用rync+inotify工具进行文件同步
+date: 2016-10-01 20:35:00
+tags: [rync, inotify, shell]
+---
+
 ## 利用rync+inotify工具进行文件同步
 
 Edited by houzi
@@ -21,6 +26,8 @@ Edited by houzi
 
 其实将`inotify`描述为工具，感觉并不是很严谨，确切的说，`inotify`是一个文件系统的事件监控机制。它允许监控程序打开一个独立的文件描述符，并针对文件变更时间对其进行监控，比如文件内容，属性更改等。可以利用这一特性，编写脚本来对要同步的文件进行监测，若该文件有改动则触发需要进行的操作(比如本文写到的重新加载php配置文件的操作)。
 
+<!--more-->
+
 Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结果，则证明支持:
 
 		>$ ll /proc/sys/fs/inotify
@@ -34,6 +41,7 @@ Centos6已支持这一特性，执行`ll /proc/sys/fs/inotify`若返回如下结
 #### 1. rsync 配置
 
 1. 客户端安装rsync后，在`/etc/`下编辑配置文件，内容如下:
+
 
 		$> cat /etc/rsyncd.conf
 		uid             = root
